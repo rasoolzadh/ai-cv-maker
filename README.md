@@ -21,20 +21,10 @@ cd CVMaker
 npm install
 npm run dev
 
-## API Setup
-Get your Gemini API key from Google AI Studio and add to .env.local:
+## 🔑 API Setup
 
-env
+Get your Gemini API key from Google AI Studio and add to `.env.local`:
+
+```env
 GEMINI_API_KEY=your_api_key_here
-📦 Deployment
-Push to GitHub
-
-##Import to Vercel
-
-Add GEMINI_API_KEY environment variable
-
-## Deploy
-
-🤝 Contributing
-Fork → Create feature branch → Commit → Open PR
 
