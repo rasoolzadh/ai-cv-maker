@@ -266,7 +266,7 @@
             async function getAIContent(inputs, apiKey) {
                 // --- ⭐️ CORE API LOGIC USING OFFICIAL SDK ⭐️ ---
                 const genAI = new GoogleGenerativeAI(apiKey);
-                const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+                const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
                 
                 const prompt = createAIPrompt(inputs);
                 const result = await model.generateContent(prompt);
@@ -389,3 +389,4 @@
     </script>
 </body>
 </html>
+
