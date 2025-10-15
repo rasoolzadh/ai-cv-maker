@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI CV Maker Pro - Final Version</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <!-- ⭐️ Official Google AI SDK ⭐️ -->
+    <script type="module" src="https://cdn.jsdelivr.net/npm/@google/generative-ai/dist/index.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Lato:wght@400;700&family=Roboto:wght@400;500;700&family=Montserrat:wght@400;500;600;700&display=swap');
         :root { --accent-color: #4f46e5; }
@@ -99,252 +102,255 @@
         </div>
     </div>
 
-    <script>
-    document.addEventListener('DOMContentLoaded', () => {
-        const getEl = (id) => document.getElementById(id);
-        const form = getEl('cv-form');
-        const apiKeyInput = getEl('api-key');
-        const photoUpload = getEl('photo-upload');
-        const photoPreview = getEl('photo-preview');
-        const photoUploadSection = getEl('photo-upload-section');
-        const cvStyleSelect = getEl('cv-style');
-        const generateBtn = getEl('generate-btn');
-        const downloadBtn = getEl('download-btn');
-        const btnText = getEl('btn-text');
-        const btnSpinner = getEl('btn-spinner');
-        const cvOutput = getEl('cv-output');
-        const errorModal = getEl('error-modal');
-        const errorMessage = getEl('error-message');
-        const closeModalBtn = getEl('close-modal-btn');
-        const addSectionBtn = getEl('add-section-btn');
-        const addSidebarSectionBtn = getEl('add-sidebar-section-btn');
-        const customSectionsContainer = getEl('custom-sections-container');
-        const customSidebarSectionsContainer = getEl('custom-sidebar-sections-container');
-        const colorThemeSelect = getEl('color-theme');
-        const sidebarColorSelect = getEl('sidebar-color');
-        const fontThemeSelect = getEl('font-theme');
-        const styleEditor = getEl('style-editor');
-        const root = document.documentElement;
-        
-        let uploadedPhotoBase64 = null;
-        let lastGeneratedContent = null;
+    <script type="module">
+        // --- ⭐️ Use the Official Google AI SDK ⭐️ ---
+        import { GoogleGenerativeAI } from "https://cdn.jsdelivr.net/npm/@google/generative-ai/dist/index.min.js";
 
-        const toggleLoading = (isLoading) => {
-            btnText.style.display = isLoading ? 'none' : 'inline';
-            btnSpinner.style.display = isLoading ? 'inline-block' : 'none';
-            generateBtn.disabled = isLoading;
-        };
-        const showError = (message) => {
-            errorMessage.textContent = message;
-            errorModal.style.display = 'flex';
-        };
-        
-        function updateStyles() {
-            if (!lastGeneratedContent) return;
-            lastGeneratedContent.color = colorThemeSelect.value;
-            lastGeneratedContent.sidebarColor = sidebarColorSelect.value;
-            lastGeneratedContent.fontFamily = fontThemeSelect.value;
-            cvOutput.innerHTML = buildCvHtml(lastGeneratedContent);
-        }
-        
-        colorThemeSelect.addEventListener('change', updateStyles);
-        sidebarColorSelect.addEventListener('change', updateStyles);
-        fontThemeSelect.addEventListener('change', updateStyles);
-        
-        closeModalBtn.addEventListener('click', () => { errorModal.style.display = 'none'; });
-        
-        cvStyleSelect.addEventListener('change', () => {
-            photoUploadSection.style.display = cvStyleSelect.value.includes('USA') ? 'none' : 'block';
-        });
-
-        photoUpload.addEventListener('change', (event) => {
-            const file = event.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onloadend = () => { uploadedPhotoBase64 = reader.result; photoPreview.src = uploadedPhotoBase64; };
-            reader.readAsDataURL(file);
-        });
-
-        function createCustomSectionInput(isSidebar) {
-            const container = isSidebar ? customSidebarSectionsContainer : customSectionsContainer;
-            const newSection = document.createElement('div');
-            newSection.className = 'custom-section';
-            const placeholder = isSidebar ? "e.g., Languages" : "e.g., Projects";
-            newSection.innerHTML = `
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
-                    <label>Custom ${isSidebar ? 'Sidebar' : 'Main'} Section</label>
-                    <button type="button" class="remove-section-btn">Remove</button>
-                </div>
-                <input type="text" class="custom-section-title" placeholder="Section Title (${placeholder})">
-                <textarea class="custom-section-content" rows="4" placeholder="Start lines with a dash (-) for bullets..." style="margin-top:0.5rem;"></textarea>
-            `;
-            container.appendChild(newSection);
-            newSection.querySelector('.remove-section-btn').addEventListener('click', () => newSection.remove());
-        }
-
-        addSectionBtn.addEventListener('click', () => createCustomSectionInput(false));
-        addSidebarSectionBtn.addEventListener('click', () => createCustomSectionInput(true));
-
-        form.addEventListener('submit', async (event) => {
-            event.preventDefault();
-            const apiKey = apiKeyInput.value.trim();
-            if (!apiKey) return showError('Please enter your Gemini API Key to begin.');
+        document.addEventListener('DOMContentLoaded', () => {
+            const getEl = (id) => document.getElementById(id);
+            const form = getEl('cv-form');
+            const apiKeyInput = getEl('api-key');
+            const photoUpload = getEl('photo-upload');
+            const photoPreview = getEl('photo-preview');
+            const photoUploadSection = getEl('photo-upload-section');
+            const cvStyleSelect = getEl('cv-style');
+            const generateBtn = getEl('generate-btn');
+            const downloadBtn = getEl('download-btn');
+            const btnText = getEl('btn-text');
+            const btnSpinner = getEl('btn-spinner');
+            const cvOutput = getEl('cv-output');
+            const errorModal = getEl('error-modal');
+            const errorMessage = getEl('error-message');
+            const closeModalBtn = getEl('close-modal-btn');
+            const addSectionBtn = getEl('add-section-btn');
+            const addSidebarSectionBtn = getEl('add-sidebar-section-btn');
+            const customSectionsContainer = getEl('custom-sections-container');
+            const customSidebarSectionsContainer = getEl('custom-sidebar-sections-container');
+            const colorThemeSelect = getEl('color-theme');
+            const sidebarColorSelect = getEl('sidebar-color');
+            const fontThemeSelect = getEl('font-theme');
+            const styleEditor = getEl('style-editor');
+            const root = document.documentElement;
             
-            const requiredFields = { Name: getEl('name').value, Title: getEl('title').value };
-            const missingFields = Object.keys(requiredFields).filter(key => !requiredFields[key]);
-            if (missingFields.length > 0) {
-                return showError(`Please fill in the following required sections: ${missingFields.join(', ')}`);
+            let uploadedPhotoBase64 = null;
+            let lastGeneratedContent = null;
+
+            const toggleLoading = (isLoading) => {
+                btnText.style.display = isLoading ? 'none' : 'inline';
+                btnSpinner.style.display = isLoading ? 'inline-block' : 'none';
+                generateBtn.disabled = isLoading;
+            };
+            const showError = (message) => {
+                errorMessage.textContent = message;
+                errorModal.style.display = 'flex';
+            };
+            
+            function updateStyles() {
+                if (!lastGeneratedContent) return;
+                lastGeneratedContent.color = colorThemeSelect.value;
+                lastGeneratedContent.sidebarColor = sidebarColorSelect.value;
+                lastGeneratedContent.fontFamily = fontThemeSelect.value;
+                cvOutput.innerHTML = buildCvHtml(lastGeneratedContent);
             }
             
-            toggleLoading(true);
-            downloadBtn.disabled = true;
+            colorThemeSelect.addEventListener('change', updateStyles);
+            sidebarColorSelect.addEventListener('change', updateStyles);
+            fontThemeSelect.addEventListener('change', updateStyles);
+            
+            closeModalBtn.addEventListener('click', () => { errorModal.style.display = 'none'; });
+            
+            cvStyleSelect.addEventListener('change', () => {
+                photoUploadSection.style.display = cvStyleSelect.value.includes('USA') ? 'none' : 'block';
+            });
 
-            try {
-                const getSections = (container) => Array.from(container.querySelectorAll('.custom-section')).map(section => ({
-                    title: section.querySelector('.custom-section-title').value,
-                    content: section.querySelector('.custom-section-content').value
-                }));
+            photoUpload.addEventListener('change', (event) => {
+                const file = event.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onloadend = () => { uploadedPhotoBase64 = reader.result; photoPreview.src = uploadedPhotoBase64; };
+                reader.readAsDataURL(file);
+            });
 
-                const userInputs = {
-                    name: getEl('name').value, email: getEl('email').value,
-                    phone: getEl('phone').value, address: getEl('address').value,
-                    linkedin: getEl('linkedin').value, github: getEl('github').value,
-                    website: getEl('website').value, title: getEl('title').value, 
-                    summary: getEl('summary').value, skills: getEl('skills').value, 
-                    education: getEl('education').value, experience: getEl('experience').value, 
-                    style: cvStyleSelect.value, color: colorThemeSelect.value, 
-                    sidebarColor: sidebarColorSelect.value, fontFamily: fontThemeSelect.value,
-                    photo: uploadedPhotoBase64, 
-                    customSections: getSections(customSectionsContainer),
-                    customSidebarSections: getSections(customSidebarSectionsContainer)
+            function createCustomSectionInput(isSidebar) {
+                const container = isSidebar ? customSidebarSectionsContainer : customSectionsContainer;
+                const newSection = document.createElement('div');
+                newSection.className = 'custom-section';
+                const placeholder = isSidebar ? "e.g., Languages" : "e.g., Projects";
+                newSection.innerHTML = `
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+                        <label>Custom ${isSidebar ? 'Sidebar' : 'Main'} Section</label>
+                        <button type="button" class="remove-section-btn">Remove</button>
+                    </div>
+                    <input type="text" class="custom-section-title" placeholder="Section Title (${placeholder})">
+                    <textarea class="custom-section-content" rows="4" placeholder="Start lines with a dash (-) for bullets..." style="margin-top:0.5rem;"></textarea>
+                `;
+                container.appendChild(newSection);
+                newSection.querySelector('.remove-section-btn').addEventListener('click', () => newSection.remove());
+            }
+
+            addSectionBtn.addEventListener('click', () => createCustomSectionInput(false));
+            addSidebarSectionBtn.addEventListener('click', () => createCustomSectionInput(true));
+
+            form.addEventListener('submit', async (event) => {
+                event.preventDefault();
+                const apiKey = apiKeyInput.value.trim();
+                if (!apiKey) return showError('Please enter your Gemini API Key to begin.');
+                
+                const requiredFields = { Name: getEl('name').value, Title: getEl('title').value };
+                const missingFields = Object.keys(requiredFields).filter(key => !requiredFields[key]);
+                if (missingFields.length > 0) {
+                    return showError(`Please fill in the following required sections: ${missingFields.join(', ')}`);
+                }
+                
+                toggleLoading(true);
+                downloadBtn.disabled = true;
+
+                try {
+                    const getSections = (container) => Array.from(container.querySelectorAll('.custom-section')).map(section => ({
+                        title: section.querySelector('.custom-section-title').value,
+                        content: section.querySelector('.custom-section-content').value
+                    }));
+
+                    const userInputs = {
+                        name: getEl('name').value, email: getEl('email').value,
+                        phone: getEl('phone').value, address: getEl('address').value,
+                        linkedin: getEl('linkedin').value, github: getEl('github').value,
+                        website: getEl('website').value, title: getEl('title').value, 
+                        summary: getEl('summary').value, skills: getEl('skills').value, 
+                        education: getEl('education').value, experience: getEl('experience').value, 
+                        style: cvStyleSelect.value, color: colorThemeSelect.value, 
+                        sidebarColor: sidebarColorSelect.value, fontFamily: fontThemeSelect.value,
+                        photo: uploadedPhotoBase64, 
+                        customSections: getSections(customSectionsContainer),
+                        customSidebarSections: getSections(customSidebarSectionsContainer)
+                    };
+                    
+                    lastGeneratedContent = await getAIContent(userInputs, apiKey);
+                    const cvHtml = buildCvHtml(lastGeneratedContent);
+                    
+                    cvOutput.innerHTML = cvHtml;
+                    downloadBtn.disabled = false;
+                    styleEditor.style.display = 'flex';
+
+                } catch (error) {
+                    let friendlyMessage = error.message;
+                    if (error.message.toLowerCase().includes('overloaded')) {
+                        friendlyMessage = "The AI model is temporarily busy. This is a common issue. Please wait 30 seconds and try again.";
+                    }
+                    showError(friendlyMessage);
+                } finally {
+                    toggleLoading(false);
+                }
+            });
+
+            downloadBtn.addEventListener('click', () => {
+                const cvContent = cvOutput.innerHTML;
+                if (!cvContent || cvContent.includes("Your CV will appear here")) {
+                    return showError("No CV content found to download.");
+                }
+
+                const printWindow = window.open('', '_blank');
+                printWindow.document.write(`
+                    <html><head><title>Print CV</title>
+                    <style>
+                        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Lato:wght@400;700&family=Roboto:wght@400;500;700&family=Montserrat:wght@400;500;600;700&display=swap');
+                        body { font-family: ${lastGeneratedContent.fontFamily}; margin: 0; }
+                        @page { margin: 0; size: A4; }
+                    </style>
+                    </head><body>${cvContent}</body></html>`);
+                printWindow.document.close();
+                printWindow.focus();
+                setTimeout(() => { printWindow.print(); printWindow.close(); }, 250);
+            });
+            
+            async function getAIContent(inputs, apiKey) {
+                // --- ⭐️ CORE API LOGIC USING OFFICIAL SDK ⭐️ ---
+                const genAI = new GoogleGenerativeAI(apiKey);
+                const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+                
+                const prompt = createAIPrompt(inputs);
+                const result = await model.generateContent(prompt);
+                const response = await result.response;
+                
+                if (!response) throw new Error("Received no response from the AI. This may be due to a safety block.");
+
+                const rawText = response.text();
+                const jsonStart = rawText.indexOf('{');
+                const jsonEnd = rawText.lastIndexOf('}');
+                if (jsonStart === -1 || jsonEnd === -1) throw new Error("The AI returned data in an unexpected format.");
+                const jsonString = rawText.substring(jsonStart, jsonEnd + 1);
+                
+                try { 
+                    const parsed = JSON.parse(jsonString);
+                    return { ...inputs, ...parsed };
+                } catch (e) { 
+                    throw new Error("The AI returned invalid data."); 
+                }
+            }
+            
+            function createAIPrompt(inputs) {
+                let summaryInstruction = '';
+                if (inputs.summary) {
+                    summaryInstruction = `The user has provided a summary. Proofread and enhance it. User's summary: "${inputs.summary}"`;
+                } else if (inputs.experience) {
+                    summaryInstruction = `The user has provided work experience. Write a summary that synthesizes their key skills from their experience. Base it on their title ("${inputs.title}") and style ("${inputs.style}"). CRITICAL: Do NOT mention years of experience.`;
+                } else {
+                    summaryInstruction = `Write a summary based on the title ("${inputs.title}") and style ("${inputs.style}"). CRITICAL: Do NOT mention years of experience.`;
+                }
+
+                const dataForAI = { ...inputs };
+                ['photo', 'color', 'sidebarColor', 'style', 'fontFamily'].forEach(k => delete dataForAI[k]);
+
+                return `You are an expert career coach. Process the user's CV data.
+                INSTRUCTIONS:
+                1. Review all text fields. Correct spelling/grammar, capitalize words appropriately.
+                2. If the user uses markdown for bolding like *text*, convert it to <strong>text</strong> tags. Otherwise, do not add any markdown or HTML tags.
+                3. **Summary:** ${summaryInstruction}
+                4. **Skills:** If "skills" is empty, suggest 5 skills based on "title". Otherwise, use theirs.
+                5. Rephrase "experience" content to be more impactful.
+                6. Return a SINGLE, VALID JSON object with all original keys, but with your enhanced text.
+                
+                USER DATA: ${JSON.stringify(dataForAI, null, 2)}`;
+            }
+
+            function buildCvHtml(content) {
+                const photoHtml = content.photo && !content.style.includes('USA') ? `<img style="width: 8rem; height: 8rem; border-radius: 50%; object-fit: cover; object-position: top; margin: 0 auto; box-shadow: 0 4px 6px rgba(0,0,0,0.1);" src="${content.photo}" alt="Profile Photo">` : '';
+                
+                const skillsArray = (typeof content.skills === 'string') ? content.skills.split(',') : (content.skills || []);
+                const skillsList = skillsArray.map(skill => `<li contenteditable="true" style="padding: 0.25rem 0;">${skill.trim()}</li>`).join('');
+                
+                const createSection = (title, data, isSidebar = false) => {
+                    if (!data || data.trim() === '') return '';
+                    let sanitizedData = data.replace(/<(?!\/?strong>)/g, "&lt;");
+                    
+                    let contentHtml = sanitizedData.split('\n').filter(line => line.trim() !== '').map(line => {
+                        if (line.trim().startsWith('-')) {
+                            return `<li style="margin-bottom: 0.5rem; font-size: 0.9rem;">${line.replace(/^-/, '').trim()}</li>`;
+                        }
+                        return `<p style="font-weight: normal; font-size: 1rem; margin-top: 0.5rem; margin-bottom: 0.5rem;">${line}</p>`;
+                    }).join('');
+
+                    contentHtml = contentHtml.replace(/(<li.*<\/li>\s*)+/g, (match) => `<ul style="margin-top: 0.5rem; padding-left: 1.25rem; list-style-type: disc;">${match}</ul>`);
+                    
+                    const headerStyle = isSidebar 
+                        ? `font-weight: 700; font-size: 1rem; border-bottom: 2px solid ${content.color}; padding-bottom: 0.5rem;`
+                        : `text-transform: uppercase; font-weight: 700; border-bottom: 2px solid ${content.color}; padding-bottom: 0.5rem; font-size: 1.1rem; letter-spacing: 0.05em;`;
+
+                    return `<div contenteditable="true" style="margin-top: 2rem;"><h3 style="${headerStyle}">${title}</h3>${contentHtml}</div>`;
                 };
                 
-                lastGeneratedContent = await getAIContent(userInputs, apiKey);
-                const cvHtml = buildCvHtml(lastGeneratedContent);
-                
-                cvOutput.innerHTML = cvHtml;
-                downloadBtn.disabled = false;
-                styleEditor.style.display = 'flex';
+                const createContactItem = (icon, data) => {
+                    if (!data || data.trim() === '') return '';
+                    return `<li style="display: flex; align-items: center; gap: 0.75rem; padding: 0.25rem 0;">${icon}<span contenteditable="true">${data}</span></li>`;
+                };
 
-            } catch (error) {
-                let friendlyMessage = error.message;
-                if (error.message.toLowerCase().includes('model is overloaded') || error.message.toLowerCase().includes('try again later')) {
-                    friendlyMessage = "The AI model is temporarily busy. This is a common issue. Please wait 30 seconds and try again.";
-                }
-                showError(friendlyMessage);
-            } finally {
-                toggleLoading(false);
-            }
-        });
-
-        downloadBtn.addEventListener('click', () => {
-            const cvContent = cvOutput.innerHTML;
-            if (!cvContent || cvContent.includes("Your CV will appear here")) {
-                return showError("No CV content found to download.");
-            }
-
-            const printWindow = window.open('', '_blank');
-            printWindow.document.write(`
-                <html><head><title>Print CV</title>
-                <style>
-                    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Lato:wght@400;700&family=Roboto:wght@400;500;700&family=Montserrat:wght@400;500;600;700&display=swap');
-                    body { font-family: ${lastGeneratedContent.fontFamily}; margin: 0; }
-                    @page { margin: 0; size: A4; }
-                </style>
-                </head><body>${cvContent}</body></html>`);
-            printWindow.document.close();
-            printWindow.focus();
-            setTimeout(() => { printWindow.print(); printWindow.close(); }, 250);
-        });
-        
-        async function getAIContent(inputs, apiKey) {
-            // --- ⭐️ THE CRITICAL FIX FOR THE MODEL NAME ⭐️ ---
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-20:generateContent?key=${apiKey}`;
-            const prompt = createAIPrompt(inputs);
-            const payload = { contents: [{ parts: [{ text: prompt }] }] };
-            const response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-            const result = await response.json();
-
-            if (!response.ok) throw new Error(result.error?.message || `API request failed with status ${response.status}`);
-            if (!result.candidates?.length) throw new Error(`Response blocked by safety filter: ${result.promptFeedback?.block_reason || 'Unknown'}`);
-            
-            const rawText = result.candidates[0].content.parts[0].text;
-            const jsonStart = rawText.indexOf('{');
-            const jsonEnd = rawText.lastIndexOf('}');
-            if (jsonStart === -1 || jsonEnd === -1) throw new Error("The AI returned data in an unexpected format.");
-            const jsonString = rawText.substring(jsonStart, jsonEnd + 1);
-            
-            try { 
-                const parsed = JSON.parse(jsonString);
-                return { ...inputs, ...parsed };
-            } catch (e) { 
-                throw new Error("The AI returned invalid data."); 
-            }
-        }
-        
-        function createAIPrompt(inputs) {
-            let summaryInstruction = '';
-            if (inputs.summary) {
-                summaryInstruction = `The user has provided a summary. Proofread and enhance it. User's summary: "${inputs.summary}"`;
-            } else if (inputs.experience) {
-                summaryInstruction = `The user has provided work experience. Write a summary that synthesizes their key skills from their experience. Base it on their title ("${inputs.title}") and style ("${inputs.style}"). CRITICAL: Do NOT mention years of experience.`;
-            } else {
-                summaryInstruction = `Write a summary based on the title ("${inputs.title}") and style ("${inputs.style}"). CRITICAL: Do NOT mention years of experience.`;
-            }
-
-            const dataForAI = { ...inputs };
-            ['photo', 'color', 'sidebarColor', 'style', 'fontFamily'].forEach(k => delete dataForAI[k]);
-
-            return `You are an expert career coach. Process the user's CV data.
-            INSTRUCTIONS:
-            1. Review all text fields. Correct spelling/grammar, capitalize words appropriately.
-            2. If the user uses markdown for bolding like *text*, convert it to <strong>text</strong> tags. Otherwise, do not add any markdown or HTML tags.
-            3. **Summary:** ${summaryInstruction}
-            4. **Skills:** If "skills" is empty, suggest 5 skills based on "title". Otherwise, use theirs.
-            5. Rephrase "experience" content to be more impactful.
-            6. Return a SINGLE, VALID JSON object with all original keys, but with your enhanced text.
-            
-            USER DATA: ${JSON.stringify(dataForAI, null, 2)}`;
-        }
-
-        function buildCvHtml(content) {
-            const photoHtml = content.photo && !content.style.includes('USA') ? `<img style="width: 8rem; height: 8rem; border-radius: 50%; object-fit: cover; object-position: top; margin: 0 auto; box-shadow: 0 4px 6px rgba(0,0,0,0.1);" src="${content.photo}" alt="Profile Photo">` : '';
-            
-            const skillsArray = (typeof content.skills === 'string') ? content.skills.split(',') : (content.skills || []);
-            const skillsList = skillsArray.map(skill => `<li contenteditable="true" style="padding: 0.25rem 0;">${skill.trim()}</li>`).join('');
-            
-            const createSection = (title, data, isSidebar = false) => {
-                if (!data || data.trim() === '') return '';
-                let sanitizedData = data.replace(/<(?!\/?strong>)/g, "&lt;");
-                
-                let contentHtml = sanitizedData.split('\n').filter(line => line.trim() !== '').map(line => {
-                    if (line.trim().startsWith('-')) {
-                        return `<li style="margin-bottom: 0.5rem; font-size: 0.9rem;">${line.replace(/^-/, '').trim()}</li>`;
-                    }
-                    return `<p style="font-weight: normal; font-size: 1rem; margin-top: 0.5rem; margin-bottom: 0.5rem;">${line}</p>`;
-                }).join('');
-
-                contentHtml = contentHtml.replace(/(<li.*<\/li>\s*)+/g, (match) => `<ul style="margin-top: 0.5rem; padding-left: 1.25rem; list-style-type: disc;">${match}</ul>`);
-                
-                const headerStyle = isSidebar 
-                    ? `font-weight: 700; font-size: 1rem; border-bottom: 2px solid ${content.color}; padding-bottom: 0.5rem;`
-                    : `text-transform: uppercase; font-weight: 700; border-bottom: 2px solid ${content.color}; padding-bottom: 0.5rem; font-size: 1.1rem; letter-spacing: 0.05em;`;
-
-                return `<div contenteditable="true" style="margin-top: 2rem;"><h3 style="${headerStyle}">${title}</h3>${contentHtml}</div>`;
-            };
-            
-            const createContactItem = (icon, data) => {
-                if (!data || data.trim() === '') return '';
-                return `<li style="display: flex; align-items: center; gap: 0.75rem; padding: 0.25rem 0;">${icon}<span contenteditable="true">${data}</span></li>`;
-            };
-
-            const icons = {
-                email: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M.05 3.555A2 2 0 0 1 2 2h12a2 2 0 0 1 1.95 1.555L8 8.414.05 3.555zM0 4.697v7.104l5.803-3.558L0 4.697zM6.761 8.83l-6.57 4.027A2 2 0 0 0 2 14h12a2 2 0 0 0 1.808-1.144l-6.57-4.027L8 9.586l-1.239-.757zm3.436-.586L16 11.803V4.697l-5.803 3.558z"/></svg>',
-                phone: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M1.885.511a1.745 1.745 0 0 1 2.61.163L6.29 2.98c.329.423.445.974.315 1.494l-.547 2.19a.678.678 0 0 0 .178.643l2.457 2.457a.678.678 0 0 0 .644.178l2.189-.547a1.745 1.745 0 0 1 1.494.315l2.306 1.794c.829.645.905 1.87.163 2.611l-1.034 1.034c-.74.74-1.846 1.065-2.877.702a18.634 18.634 0 0 1-7.01-4.42 18.634 18.634 0 0 1-4.42-7.009c-.362-1.03-.037-2.137.703-2.877L1.885.511z"/></svg>',
-                address: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M8 16s6-5.686 6-10A6 6 0 0 0 2 6c0 4.314 6 10 6 10zm0-7a3 3 0 1 1 0-6 3 3 0 0 1 0 6z"/></svg>',
-                linkedin: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M0 1.146C0 .513.526 0 1.175 0h13.65C15.474 0 16 .513 16 1.146v13.708c0 .633-.526 1.146-1.175 1.146H1.175C.526 16 0 15.487 0 14.854V1.146zm4.943 12.248V6.169H2.542v7.225h2.401zm-1.2-8.212c.837 0 1.358-.554 1.358-1.248-.015-.709-.52-1.248-1.342-1.248-.822 0-1.359.54-1.359 1.248 0 .694.521 1.248 1.327 1.248h.016zm4.908 8.212V9.359c0-.216.016-.432.08-.586.173-.431.568-.878 1.232-.878.869 0 1.216.662 1.216 1.634v3.865h2.401V9.25c0-2.22-1.184-3.252-2.764-3.252-1.274 0-1.845.7-2.165 1.193v.025h-.016a5.54 5.54 0 0 1 .016-.025V6.169h-2.4c.03.678 0 7.225 0 7.225h2.4z"/></svg>',
-                github: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.012 8.012 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>',
-                website: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M4.74-2.546zM8 13c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm0-5c-.55 0-1 .45-1 1s.45 1 1 1 1-.45 1-1-.45-1-1-1zM.25 7.5a.75.75 0 0 1 0-1.5h15.5a.75.75 0 0 1 0 1.5H.25zM12 1.25a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 0 1.5h-1.5a.75.75 0 0 1-.75-.75zM12 6.25a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 0 1.5h-1.5a.75.75 0 0 1-.75-.75zM2.5 1.25a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 0 1.5h-1.5a.75.75 0 0 1-.75-.75zM2.5 6.25a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 0 1.5h-1.5a.75.75 0 0 1-.75-.75z"/></svg>'
+                const icons = {
+                    email: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M.05 3.555A2 2 0 0 1 2 2h12a2 2 0 0 1 1.95 1.555L8 8.414.05 3.555zM0 4.697v7.104l5.803-3.558L0 4.697zM6.761 8.83l-6.57 4.027A2 2 0 0 0 2 14h12a2 2 0 0 0 1.808-1.144l-6.57-4.027L8 9.586l-1.239-.757zm3.436-.586L16 11.803V4.697l-5.803 3.558z"/></svg>',
+                    phone: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M1.885.511a1.745 1.745 0 0 1 2.61.163L6.29 2.98c.329.423.445.974.315 1.494l-.547 2.19a.678.678 0 0 0 .178.643l2.457 2.457a.678.678 0 0 0 .644.178l2.189-.547a1.745 1.745 0 0 1 1.494.315l2.306 1.794c.829.645.905 1.87.163 2.611l-1.034 1.034c-.74.74-1.846 1.065-2.877.702a18.634 18.634 0 0 1-7.01-4.42 18.634 18.634 0 0 1-4.42-7.009c-.362-1.03-.037-2.137.703-2.877L1.885.511z"/></svg>',
+                    address: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M8 16s6-5.686 6-10A6 6 0 0 0 2 6c0 4.314 6 10 6 10zm0-7a3 3 0 1 1 0-6 3 3 0 0 1 0 6z"/></svg>',
+                    linkedin: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M0 1.146C0 .513.526 0 1.175 0h13.65C15.474 0 16 .513 16 1.146v13.708c0 .633-.526 1.146-1.175 1.146H1.175C.526 16 0 15.487 0 14.854V1.146zm4.943 12.248V6.169H2.542v7.225h2.401zm-1.2-8.212c.837 0 1.358-.554 1.358-1.248-.015-.709-.52-1.248-1.342-1.248-.822 0-1.359.54-1.359 1.248 0 .694.521 1.248 1.327 1.248h.016zm4.908 8.212V9.359c0-.216.016-.432.08-.586.173-.431.568-.878 1.232-.878.869 0 1.216.662 1.216 1.634v3.865h2.401V9.25c0-2.22-1.184-3.252-2.764-3.252-1.274 0-1.845.7-2.165 1.193v.025h-.016a5.54 5.54 0 0 1 .016-.025V6.169h-2.4c.03.678 0 7.225 0 7.225h2.4z"/></svg>',
+                    github: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.012 8.012 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>',
+                    website: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M4.74-2.546zM8 13c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm0-5c-.55 0-1 .45-1 1s.45 1 1 1 1-.45 1-1-.45-1-1-1zM.25 7.5a.75.75 0 0 1 0-1.5h15.5a.75.75 0 0 1 0 1.5H.25zM12 1.25a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 0 1.5h-1.5a.75.75 0 0 1-.75-.75zM12 6.25a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 0 1.5h-1.5a.75.75 0 0 1-.75-.75zM2.5 1.25a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 0 1.5h-1.5a.75.75 0 0 1-.75-.75zM2.5 6.25a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 0 1.5h-1.5a.75.75 0 0 1-.75-.75z"/></svg>'
             };
             
             const customSectionsHtml = (content.customSections || []).filter(s => s.title && s.content).map(s => createSection(s.title, s.content)).join('');
@@ -383,6 +389,3 @@
     </script>
 </body>
 </html>
-
-
-
