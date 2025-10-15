@@ -4,15 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI CV Maker Pro - Final Version</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Lato:wght@400;700&family=Roboto:wght@400;500;700&family=Montserrat:wght@400;500;600;700&display=swap');
         :root { --accent-color: #4f46e5; }
         body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; color: #334155; margin: 0; line-height: 1.6; }
         .app-container { display: flex; flex-direction: column; min-height: 100vh; }
-        .controls-panel { width: 100%; background-color: #ffffff; padding: 1.5rem; box-shadow: 0 4px 6px rgba(0,0,0,0.1); overflow-y: auto; box-sizing: border-box; }
-        .preview-panel { width: 100%; background-color: #f1f5f9; padding: 1.5rem; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; box-sizing: border-box; }
-        h1 { font-size: 1.875rem; font-weight: 800; color: #1e293b; }
+        .controls-panel { width: 100%; background-color: #ffffff; padding: 2rem; box-shadow: 0 4px 6px rgba(0,0,0,0.1); overflow-y: auto; box-sizing: border-box; }
+        .preview-panel { width: 100%; background-color: #f1f5f9; padding: 2.5rem; display: flex; flex-direction: column; align-items: center; justify-content: center; box-sizing: border-box; }
+        h1 { font-size: 2rem; font-weight: 800; color: #1e293b; }
         .controls-panel p { color: #64748b; margin-top: 0.5rem; }
         label { font-size: 0.875rem; font-weight: 500; color: #475569; display: block; margin-bottom: 0.5rem; }
         input, textarea, select { width: 100%; border: 1px solid #cbd5e1; border-radius: 0.375rem; padding: 0.5rem 0.75rem; font-size: 0.875rem; box-sizing: border-box; }
@@ -24,19 +23,13 @@
         button:disabled { background-color: #e2e8f0; color: #94a3b8; cursor: not-allowed; }
         .spinner { width: 1.25rem; height: 1.25rem; border: 3px solid rgba(255,255,255,0.3); border-top-color: #ffffff; border-radius: 50%; animation: spin 1s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
-        #cv-output-container { width: 100%; max-width: 50rem; height: auto; min-height: 70vh; background-color: white; box-shadow: 0 10px 15px rgba(0,0,0,0.1); border-radius: 0.5rem; overflow: auto; }
-        #style-editor { display: none; flex-wrap: wrap; gap: 1rem; padding: 1rem; background-color: #ffffff; border-radius: 0.5rem; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 1.5rem; max-width: 50rem; width: 100%; box-sizing: border-box; }
-        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 100; padding: 1rem; }
-        .modal-content { background: white; padding: 2rem; border-radius: 0.5rem; width: 100%; max-width: 24rem; text-align: center; }
+        #cv-output-container { width: 100%; max-width: 50rem; height: 95%; background-color: white; box-shadow: 0 10px 15px rgba(0,0,0,0.1); border-radius: 0.5rem; overflow: auto; }
+        #style-editor { display: none; flex-wrap: wrap; gap: 1.5rem; padding: 1rem; background-color: #ffffff; border-radius: 0.5rem; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 1.5rem; max-width: 50rem; width: 100%; box-sizing: border-box; }
+        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 100; }
+        .modal-content { background: white; padding: 2rem; border-radius: 0.5rem; width: 24rem; text-align: center; }
         .custom-section { border: 1px solid #e2e8f0; padding: 1rem; border-radius: 0.5rem; margin-top: 1rem; }
         .remove-section-btn { background: #fee2e2; color: #dc2626; padding: 0.25rem 0.5rem; font-size: 0.75rem; border-radius: 99px; }
-        
-        @media (min-width: 1024px) {
-            .app-container { flex-direction: row; }
-            .controls-panel { width: 35%; max-width: 480px; }
-            .preview-panel { width: 65%; justify-content: center; }
-            #cv-output-container { height: 95%; }
-        }
+        @media (min-width: 1024px) { .app-container { flex-direction: row; } .controls-panel { width: 35%; } .preview-panel { width: 65%; } }
     </style>
 </head>
 <body>
@@ -234,7 +227,11 @@
                 styleEditor.style.display = 'flex';
 
             } catch (error) {
-                showError(`An unexpected error occurred: ${error.message}`);
+                let friendlyMessage = error.message;
+                if (error.message.toLowerCase().includes('model is overloaded')) {
+                    friendlyMessage = "The AI model is temporarily busy. This is a common issue. Please wait 30 seconds and try again.";
+                }
+                showError(friendlyMessage);
             } finally {
                 toggleLoading(false);
             }
@@ -261,7 +258,8 @@
         });
         
         async function getAIContent(inputs, apiKey) {
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`;
+            // --- ⭐️ THE CRITICAL FIX FOR THE MODEL NAME ⭐️ ---
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
             const prompt = createAIPrompt(inputs);
             const payload = { contents: [{ parts: [{ text: prompt }] }] };
             const response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
@@ -315,9 +313,9 @@
             const skillsArray = (typeof content.skills === 'string') ? content.skills.split(',') : (content.skills || []);
             const skillsList = skillsArray.map(skill => `<li contenteditable="true" style="padding: 0.25rem 0;">${skill.trim()}</li>`).join('');
             
-            // --- ⭐️ FINAL, ROBUST SECTION BUILDER ⭐️ ---
             const createSection = (title, data, isSidebar = false) => {
                 if (!data || data.trim() === '') return '';
+                // The AI is asked to convert asterisks to <strong> tags. Sanitize everything else.
                 let sanitizedData = data.replace(/<(?!\/?strong>)/g, "&lt;");
                 
                 let contentHtml = sanitizedData.split('\n').filter(line => line.trim() !== '').map(line => {
