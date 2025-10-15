@@ -259,7 +259,7 @@
         
         async function getAIContent(inputs, apiKey) {
             // --- ⭐️ THE CRITICAL FIX FOR THE MODEL NAME ⭐️ ---
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`;
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
             const prompt = createAIPrompt(inputs);
             const payload = { contents: [{ parts: [{ text: prompt }] }] };
             const response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
@@ -383,4 +383,5 @@
     </script>
 </body>
 </html>
+
 
