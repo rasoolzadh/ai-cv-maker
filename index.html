@@ -228,7 +228,7 @@
 
             } catch (error) {
                 let friendlyMessage = error.message;
-                if (error.message.toLowerCase().includes('model is overloaded')) {
+                if (error.message.toLowerCase().includes('model is overloaded') || error.message.toLowerCase().includes('try again later')) {
                     friendlyMessage = "The AI model is temporarily busy. This is a common issue. Please wait 30 seconds and try again.";
                 }
                 showError(friendlyMessage);
@@ -259,7 +259,7 @@
         
         async function getAIContent(inputs, apiKey) {
             // --- ⭐️ THE CRITICAL FIX FOR THE MODEL NAME ⭐️ ---
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`;
             const prompt = createAIPrompt(inputs);
             const payload = { contents: [{ parts: [{ text: prompt }] }] };
             const response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
@@ -315,7 +315,6 @@
             
             const createSection = (title, data, isSidebar = false) => {
                 if (!data || data.trim() === '') return '';
-                // The AI is asked to convert asterisks to <strong> tags. Sanitize everything else.
                 let sanitizedData = data.replace(/<(?!\/?strong>)/g, "&lt;");
                 
                 let contentHtml = sanitizedData.split('\n').filter(line => line.trim() !== '').map(line => {
@@ -384,3 +383,4 @@
     </script>
 </body>
 </html>
+
